@@ -35,13 +35,13 @@ Both scripts are **idempotent**: run them again to re-apply, to continue after a
 Node on mainnet:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/redswitches-deploy/main/deploy-node.sh | bash -s -- --network mainnet
+curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/lightchain-rails/main/deploy-node.sh | bash -s -- --network mainnet
 ```
 
 GPU worker on mainnet serving `llama3-8b`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/redswitches-deploy/main/deploy-worker.sh | bash -s -- --network mainnet --models llama3-8b --auto-reboot
+curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/lightchain-rails/main/deploy-worker.sh | bash -s -- --network mainnet --models llama3-8b --auto-reboot
 ```
 
 `--auto-reboot` lets the worker script reboot by itself after the NVIDIA driver install and resume on its own. Leave it off if you would rather reboot by hand.
@@ -151,9 +151,9 @@ A product-page snippet that does the right thing for both products:
 
 ```bash
 # node
-curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/redswitches-deploy/main/deploy-node.sh   | bash -s -- --network mainnet
+curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/lightchain-rails/main/deploy-node.sh   | bash -s -- --network mainnet
 # GPU worker
-curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/redswitches-deploy/main/deploy-worker.sh | bash -s -- --network mainnet --models llama3-8b --auto-reboot
+curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/lightchain-rails/main/deploy-worker.sh | bash -s -- --network mainnet --models llama3-8b --auto-reboot
 ```
 
 ## Security model
@@ -198,7 +198,7 @@ Password SSH login is not changed by these scripts. Use key-only SSH on any mach
 --rpc-allow CIDR[,CIDR]       …and allow only these networks in the firewall (required with --public-rpc)
 --extip IP                    public IPv4 (auto-detected)
 --datadir DIR                 default /opt/lightchain/<network>
---graffiti TEXT               validator: block graffiti, default redswitches
+--graffiti TEXT               validator: block graffiti, default lightchain-rails
 --no-firewall                 leave ufw alone
 --dry-run                     preflight and print the plan, change nothing
 --uninstall                   stop and remove containers, images and firewall rules; keep the data

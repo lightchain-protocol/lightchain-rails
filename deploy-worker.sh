@@ -9,8 +9,8 @@
 #  funded. Idempotent: run it again at any point and it continues where it
 #  stopped.
 #
-#  One-liner (RedSwitches post-install hook or your own shell):
-#    curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/redswitches-deploy/main/deploy-worker.sh \
+#  One-liner (a hosting provider post-install hook or your own shell):
+#    curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/lightchain-rails/main/deploy-worker.sh \
 #      | bash -s -- --network mainnet --models llama3-8b --auto-reboot
 #
 #  What it does
@@ -42,7 +42,7 @@
 set -Eeuo pipefail
 
 VERSION="1.0.0"
-SCRIPT_URL="https://raw.githubusercontent.com/lightchain-protocol/redswitches-deploy/main/deploy-worker.sh"
+SCRIPT_URL="https://raw.githubusercontent.com/lightchain-protocol/lightchain-rails/main/deploy-worker.sh"
 LOG=/var/log/lightchain-deploy.log
 STATUS=/etc/lightchain/deploy-status.json
 LOCK=/var/lock/lightchain-deploy.lock

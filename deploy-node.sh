@@ -6,8 +6,8 @@
 #  (geth execution client + Prysm beacon node), optionally with a validator
 #  client. Idempotent: run it again to re-apply the configuration.
 #
-#  One-liner (RedSwitches post-install hook or your own shell):
-#    curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/redswitches-deploy/main/deploy-node.sh \
+#  One-liner (a hosting provider post-install hook or your own shell):
+#    curl -fsSL https://raw.githubusercontent.com/lightchain-protocol/lightchain-rails/main/deploy-node.sh \
 #      | bash -s -- --network mainnet
 #
 #  What it does
@@ -49,11 +49,11 @@ PUBLIC_RPC=0
 RPC_ALLOW=""
 EXTIP=""
 FIREWALL=1
-GRAFFITI="redswitches"
+GRAFFITI="lightchain-rails"
 DRY_RUN=0
 UNINSTALL=0
 PURGE=0
-BUNDLE_BASE="${LIGHTCHAIN_BUNDLE_BASE:-https://raw.githubusercontent.com/lightchain-protocol/redswitches-deploy/main/networks}"
+BUNDLE_BASE="${LIGHTCHAIN_BUNDLE_BASE:-https://raw.githubusercontent.com/lightchain-protocol/lightchain-rails/main/networks}"
 
 GETH_IMAGE="ghcr.io/lightchain-protocol/geth:v1.17.0-lc.1"
 BEACON_IMAGE="ghcr.io/lightchain-protocol/prysm:v7.1.2-lc.2.2"
@@ -71,7 +71,7 @@ Usage (as root):
   --keystores DIR               validator: Prysm wallet directory from the deposit tooling
   --password FILE               validator: wallet password file
   --fee-recipient 0x…           validator: address that receives priority fees
-  --graffiti TEXT               validator: block graffiti, default redswitches
+  --graffiti TEXT               validator: block graffiti, default lightchain-rails
   --public-rpc                  bind HTTP/WS RPC and the beacon API on all interfaces…
   --rpc-allow CIDR[,CIDR]       …and allow only these networks in the firewall (required with --public-rpc)
   --extip IP                    public IPv4 (auto-detected)
