@@ -1,0 +1,2 @@
+# editor and local tooling state (never part of the deploy kit)
+.vscode/
