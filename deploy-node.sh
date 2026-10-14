@@ -157,8 +157,10 @@ retry() { # n cmd...
 }
 ssh_ports() { # every port sshd is configured for or listening on; 22 if none found
   local p
-  p=$( { grep -shE '^\s*Port\s+[0-9]+' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null | awk '{print $2}'
-         ss -tlnpH 2>/dev/null | awk '/"sshd"/ {sub(/.*:/,"",$4); print $4}'; } | grep -E '^[0-9]+$' | sort -un | tr '\n' ' ')
+  # every command here may legitimately find nothing; guard each one so the ERR trap (set -eE, pipefail) never fires
+  p=$( { grep -shE '^\s*Port\s+[0-9]+' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null || :; } | awk '{print $2}'
+       { ss -tlnpH 2>/dev/null || :; } | awk '/"sshd"/ {sub(/.*:/,"",$4); print $4}' )
+  p=$(printf '%s\n' $p | { grep -E '^[0-9]+$' || :; } | sort -un | tr '\n' ' ')
   echo "${p:-22}"
 }
 APT="apt-get -o DPkg::Lock::Timeout=600 -qq"
