@@ -338,12 +338,13 @@ fi
 if [ -f "$DATADIR/docker-compose.yml" ] && [ "${LC_OVERWRITE_COMPOSE:-0}" != 1 ]; then
   die "$DATADIR/docker-compose.yml already exists and is left untouched. To update a running node, change its image lines and run 'docker compose up -d --no-deps <service>'. To regenerate the file from this script's defaults, re-run with LC_OVERWRITE_COMPOSE=1." 5
 fi
+# The header line written into the file below tells the operator how to update without re-running this script.
 log "Writing $DATADIR/docker-compose.yml"
 if [ "$PUBLIC_RPC" = 1 ]; then HTTP_ADDR="0.0.0.0"; else HTTP_ADDR="127.0.0.1"; fi
 PEER_FLAGS=""; for p in $PEERS; do PEER_FLAGS="$PEER_FLAGS
       - \"--peer=$p\""; done
 cat > "$DATADIR/docker-compose.yml" <<EOF
-# Lightchain $NETWORK node, written by deploy-node.sh $VERSION on $(date -u +%Y-%m-%dT%H:%MZ). Re-run the script instead of editing.
+# Lightchain $NETWORK node, written by deploy-node.sh $VERSION on $(date -u +%Y-%m-%dT%H:%MZ). To update, edit an image line here and run: docker compose up -d --no-deps <service>. Do not re-run the script: it refuses to overwrite this file.
 services:
   geth:
     image: $GETH_IMAGE
@@ -490,6 +491,8 @@ el=$(curl -s -m 3 -X POST -H 'content-type: application/json' --data '{"jsonrpc"
 ok "geth eth_syncing: $el  (false means the execution layer is at head; snap sync takes 10 to 60 minutes)"
 write_status running
 
+# Summary printed to the operator. Its "update" line gives the compose-based update; re-running this script is no
+# longer an update path.
 cat <<EOF
 
 =============================================================================
