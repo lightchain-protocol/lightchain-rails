@@ -55,8 +55,10 @@ UNINSTALL=0
 PURGE=0
 BUNDLE_BASE="${LIGHTCHAIN_BUNDLE_BASE:-https://raw.githubusercontent.com/lightchain-protocol/lightchain-rails/main/networks}"
 
-GETH_IMAGE="ghcr.io/lightchain-protocol/geth:v1.17.0-lc.1"
-BEACON_IMAGE="ghcr.io/lightchain-protocol/prysm:v7.1.2-lc.2.2"
+# geth lc.3.1 carries the pathdb duplicate-root fix; prysm lc.2.3 carries the inactivity-penalty overflow fix.
+# Do not deploy mainnet on anything older: lc.2.2 halts after 30.7 hours without finality.
+GETH_IMAGE="ghcr.io/lightchain-protocol/geth:v1.17.0-lc.3.1"
+BEACON_IMAGE="ghcr.io/lightchain-protocol/prysm:v7.1.2-lc.2.3"
 VALIDATOR_IMAGE="ghcr.io/lightchain-protocol/prysm:v7.1.2-lc.2"   # validator client build of the same release
 
 usage() {
@@ -330,12 +332,19 @@ if [ "$ROLE" = validator ]; then
 fi
 
 # ---- 7. compose -------------------------------------------------------------
+# Never overwrite an existing compose file unless told to. A file that was edited after this script wrote it (a second
+# validator service, changed images or flags, added peers) would lose those edits, and the containers would be
+# recreated from this script's defaults.
+if [ -f "$DATADIR/docker-compose.yml" ] && [ "${LC_OVERWRITE_COMPOSE:-0}" != 1 ]; then
+  die "$DATADIR/docker-compose.yml already exists and is left untouched. To update a running node, change its image lines and run 'docker compose up -d --no-deps <service>'. To regenerate the file from this script's defaults, re-run with LC_OVERWRITE_COMPOSE=1." 5
+fi
+# The header line written into the file below tells the operator how to update without re-running this script.
 log "Writing $DATADIR/docker-compose.yml"
 if [ "$PUBLIC_RPC" = 1 ]; then HTTP_ADDR="0.0.0.0"; else HTTP_ADDR="127.0.0.1"; fi
 PEER_FLAGS=""; for p in $PEERS; do PEER_FLAGS="$PEER_FLAGS
       - \"--peer=$p\""; done
 cat > "$DATADIR/docker-compose.yml" <<EOF
-# Lightchain $NETWORK node, written by deploy-node.sh $VERSION on $(date -u +%Y-%m-%dT%H:%MZ). Re-run the script instead of editing.
+# Lightchain $NETWORK node, written by deploy-node.sh $VERSION on $(date -u +%Y-%m-%dT%H:%MZ). To update, edit an image line here and run: docker compose up -d --no-deps <service>. Do not re-run the script: it refuses to overwrite this file.
 services:
   geth:
     image: $GETH_IMAGE
@@ -456,7 +465,7 @@ fi
 # ---- 9. start ---------------------------------------------------------------
 log "Starting containers"
 cd "$DATADIR"
-docker compose up -d --remove-orphans >/dev/null
+docker compose up -d >/dev/null   # no --remove-orphans: services added to this project by hand must keep running
 sleep 8
 docker compose ps --format 'table {{.Name}}\t{{.Status}}'
 for c in geth beacon-chain $( [ "$ROLE" = validator ] && echo validator ); do
@@ -465,8 +474,7 @@ done
 
 # ---- 10. cleanup ------------------------------------------------------------
 log "Cleaning up"
-docker images --format '{{.Repository}}:{{.Tag}}' | grep '^ghcr.io/lightchain-protocol/' \
-  | grep -vx -e "$GETH_IMAGE" -e "$BEACON_IMAGE" -e "$VALIDATOR_IMAGE" | xargs -r docker rmi >/dev/null 2>&1 || true
+# Other Lightchain images are kept: an image loaded by hand may exist nowhere else. Only dangling layers are pruned.
 docker image prune -f >/dev/null 2>&1 || true
 $APT clean >/dev/null 2>&1 || true
 ok "superseded images removed, apt cache cleared"
@@ -483,6 +491,8 @@ el=$(curl -s -m 3 -X POST -H 'content-type: application/json' --data '{"jsonrpc"
 ok "geth eth_syncing: $el  (false means the execution layer is at head; snap sync takes 10 to 60 minutes)"
 write_status running
 
+# Summary printed to the operator. Its "update" line gives the compose-based update; re-running this script is no
+# longer an update path.
 cat <<EOF
 
 =============================================================================
@@ -491,7 +501,7 @@ cat <<EOF
    logs:     docker logs -f --tail 100 geth | beacon-chain$( [ "$ROLE" = validator ] && echo " | validator")
    head:     curl -s localhost:3500/eth/v1/node/syncing | jq .
    stop:     cd $DATADIR && docker compose stop        (always stop before a reboot: geth needs a clean shutdown)
-   update:   re-run this script (new image tags are picked up, old images pruned)
+   update:   edit the image line in docker-compose.yml, then: docker compose up -d --no-deps <service>   (do not re-run this script)
    remove:   re-run with --uninstall [--purge]
    deploy log: $LOG
 $( [ "$ROLE" = validator ] && printf '   validator: each key needs a %s deposit to 0x4242…4242 before it activates; doppelganger protection delays the first duties by two epochs.\n' "$STAKE")
